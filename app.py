@@ -19,9 +19,12 @@ def add_features(df):
     df['SMA10'] = df['Close'].rolling(10).mean()
     df['SMA30'] = df['Close'].rolling(30).mean()
     
-    if df['Close'].isna().sum() == 0 and len(df) >= 15:
-        df['RSI'] = RSIIndicator(df['Close'], window=14).rsi()
+    try:
+        if df['Close'].isna().sum() == 0 and len(df) >= 20:
+        df['RSI'] = RSIIndicator(close=df['Close'], window=14).rsi()
     else:
+            df['RSI'] = np.nan
+    except Exception as e:
         df['RSI'] = np.nan
 
     df['Momentum'] = df['Close'] - df['Close'].shift(10)
