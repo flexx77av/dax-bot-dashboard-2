@@ -54,6 +54,9 @@ def get_prediction_df(ticker, confidence_threshold):
     X = df[features]
     y = df['Target']
 
+    if len(X) < 10 or X.isnull().values.any():
+        return pd.DataFrame()
+
     if X.isnull().values.any():
         return pd.DataFrame()
 
