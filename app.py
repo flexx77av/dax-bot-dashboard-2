@@ -18,7 +18,12 @@ DAX_TICKERS = ["ADS.DE", "BAS.DE", "BAYN.DE", "BMW.DE", "DAI.DE", "DBK.DE", "DB1
 def add_features(df):
     df['SMA10'] = df['Close'].rolling(10).mean()
     df['SMA30'] = df['Close'].rolling(30).mean()
-    df['RSI'] = RSIIndicator(df['Close'], window=14).rsi()
+    
+    if df['Close'].isna().sum() == 0 and len(df) >= 15:
+        df['RSI'] = RSIIndicator(df['Close'], window=14).rsi()
+    else:
+        df['RSI'] = np.nan
+
     df['Momentum'] = df['Close'] - df['Close'].shift(10)
     df['Volatility'] = df['Close'].rolling(window=10).std()
     df['Return1'] = df['Close'].pct_change()
