@@ -18,13 +18,15 @@ DAX_TICKERS = ["ADS.DE", "BAS.DE", "BAYN.DE", "BMW.DE", "DAI.DE", "DBK.DE", "DB1
 def add_features(df):
     df['SMA10'] = df['Close'].rolling(10).mean()
     df['SMA30'] = df['Close'].rolling(30).mean()
-    
+
     try:
-        if df['Close'].isna().sum() == 0 and len(df) >= 20:
-        df['RSI'] = RSIIndicator(close=df['Close'], window=14).rsi()
-    else:
+        close_series = pd.Series(df['Close'].values, index=df.index)
+        if close_series.isna().sum() == 0 and len(close_series) >= 20:
+            rsi_calc = RSIIndicator(close=close_series, window=14)
+            df['RSI'] = rsi_calc.rsi()
+        else:
             df['RSI'] = np.nan
-    except Exception as e:
+    except Exception:
         df['RSI'] = np.nan
 
     df['Momentum'] = df['Close'] - df['Close'].shift(10)
@@ -41,7 +43,7 @@ def create_target(df, horizon=6, threshold=0.003):
 
 def get_prediction_df(ticker, confidence_threshold):
     df = yf.download(ticker, interval="15m", period="5d", progress=False)
-    if df.empty:
+    if df.empty or len(df) < 30:
         return pd.DataFrame()
 
     df = add_features(df)
@@ -51,6 +53,9 @@ def get_prediction_df(ticker, confidence_threshold):
     features = ['SMA10', 'SMA30', 'RSI', 'Momentum', 'Volatility', 'Return1', 'Return5', 'Volume_Change']
     X = df[features]
     y = df['Target']
+
+    if X.isnull().values.any():
+        return pd.DataFrame()
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, shuffle=False, test_size=0.2)
     model = xgb.XGBClassifier(n_estimators=100, use_label_encoder=False, eval_metric='logloss')
